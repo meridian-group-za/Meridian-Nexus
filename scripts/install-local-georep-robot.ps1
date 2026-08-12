@@ -1,16 +1,25 @@
 $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$node = (Get-Command node).Source
+$nodeCommand = Get-Command node -ErrorAction SilentlyContinue
+$nodeCandidates = @(
+  if ($nodeCommand) { $nodeCommand.Source }
+  (Join-Path $env:ProgramFiles 'nodejs\node.exe')
+  if (${env:ProgramFiles(x86)}) { Join-Path ${env:ProgramFiles(x86)} 'nodejs\node.exe' }
+) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
+$node = $nodeCandidates | Select-Object -First 1
+if (-not $node) { throw 'Node.js was not found. Install Node.js 18 or newer, then run setup again.' }
+$npm = Join-Path (Split-Path -Parent $node) 'npm.cmd'
+if (-not (Test-Path -LiteralPath $npm)) { throw "npm.cmd was not found beside Node.js at $node." }
 $script = Join-Path $repoRoot 'scripts\local-georep-robot.mjs'
 $taskName = 'Meridian Nexus - GeoRep Notifications'
 
 Push-Location $repoRoot
 try {
-  npm.cmd install
-  node $script check
-  node $script login
+  & $npm install
+  & $node $script check
+  & $node $script login
   if ($LASTEXITCODE -ne 0) { throw 'The dedicated browser sign-in was not completed.' }
-  node $script sync
+  & $node $script sync
   if ($LASTEXITCODE -ne 0) { throw 'The first GeoRep-to-SharePoint sync did not complete.' }
 
   $action = New-ScheduledTaskAction -Execute $node -Argument ('"{0}" sync' -f $script) -WorkingDirectory $repoRoot
