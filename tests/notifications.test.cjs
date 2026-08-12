@@ -38,3 +38,14 @@ test('escapes untrusted notification text and rejects unsafe links', () => {
   assert.ok(!html.includes('javascript:'));
   assert.ok(html.includes('&lt;script&gt;'));
 });
+
+test('embeds an uploaded image to the right of the notification copy', () => {
+  const html = notifications.renderCard({
+    card_name: 'Oral B Training',
+    heading: 'Training is now live',
+    image_url: 'https://example.test/oral-b.png',
+  });
+  assert.ok(html.includes('data-nexus-notification-image'));
+  assert.ok(html.includes('width:clamp(78px,30%,104px)'));
+  assert.ok(html.indexOf('data-nexus-notification-copy') < html.indexOf('data-nexus-notification-image'));
+});
