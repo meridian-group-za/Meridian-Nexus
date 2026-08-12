@@ -1,0 +1,66 @@
+{
+  "generated_at": "2026-08-12T10:00:00+02:00",
+  "source": "GeoRep notifications",
+  "items": [
+    {
+      "source_id": "henties-trade-presenters-2026-08-12",
+      "card_name": "Henties Trade Presenters",
+      "heading": "HENTIES Trade Presenters are now available in the content library",
+      "description": "Please review the latest trade presenters and supporting material.",
+      "start_date": "2026-08-12",
+      "end_date": "2026-09-30",
+      "content_type": "Information",
+      "card_type": "2 Row",
+      "status": "Active",
+      "priority": 1,
+      "image_url": "",
+      "target_url": "",
+      "action_text": "Open"
+    },
+    {
+      "source_id": "chill-beverages-product-flow-2026-08-04",
+      "card_name": "CHILL BEVERAGES",
+      "heading": "CHILL BEVERAGES - PRODUCT FLOW",
+      "description": "Product information and execution standards are now available.",
+      "start_date": "2026-08-04",
+      "end_date": "2026-09-30",
+      "content_type": "Information",
+      "card_type": "3 Row_Image",
+      "status": "Active",
+      "priority": 2,
+      "image_url": "",
+      "target_url": "",
+      "action_text": "Open"
+    },
+    {
+      "source_id": "pg-oral-b-training-2026-07-28",
+      "card_name": "P&G | Oral B Training",
+      "heading": "Oral B Training is Now LIVE",
+      "description": "Open the learning material and complete the required training.",
+      "start_date": "2026-07-28",
+      "end_date": "2026-08-31",
+      "content_type": "Learning",
+      "card_type": "3 Row_Image",
+      "status": "Active",
+      "priority": 3,
+      "image_url": "",
+      "target_url": "",
+      "action_text": "Open"
+    },
+    {
+      "source_id": "penflex-2026-07-22",
+      "card_name": "Penflex",
+      "heading": "Checkers Hyper Penflex Bin Combo Execution",
+      "description": "Review the new execution requirements and supporting content.",
+      "start_date": "2026-07-22",
+      "end_date": "2026-08-31",
+      "content_type": "Information",
+      "card_type": "3 Row_Image",
+      "status": "Active",
+      "priority": 4,
+      "image_url": "",
+      "target_url": "",
+      "action_text": "Open"
+    }
+  ]
+}

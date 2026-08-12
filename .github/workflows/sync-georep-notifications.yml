@@ -1,0 +1,57 @@
+name: Sync GeoRep notifications
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: georep-notification-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      GEOREP_NOTIFICATIONS_URL: ${{ secrets.GEOREP_NOTIFICATIONS_URL }}
+      GEOREP_AUTHORIZATION: ${{ secrets.GEOREP_AUTHORIZATION }}
+      GEOREP_COOKIE: ${{ secrets.GEOREP_COOKIE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check configuration
+        id: configuration
+        shell: bash
+        run: |
+          if [ -n "$GEOREP_NOTIFICATIONS_URL" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "GeoRep sync is waiting for the GEOREP_NOTIFICATIONS_URL repository secret."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.configuration.outputs.ready == 'true'
+        with:
+          node-version: "22"
+
+      - name: Refresh notification feed
+        if: steps.configuration.outputs.ready == 'true'
+        run: node scripts/sync-georep-notifications.mjs
+
+      - name: Commit a changed feed
+        if: steps.configuration.outputs.ready == 'true'
+        shell: bash
+        run: |
+          if git diff --quiet -- notifications.json; then
+            echo "Notification feed is unchanged."
+            exit 0
+          fi
+          git config user.name "Meridian Nexus Sync"
+          git config user.email "nexus-sync@users.noreply.github.com"
+          git add notifications.json
+          git commit -m "Sync GeoRep notifications"
+          git push
