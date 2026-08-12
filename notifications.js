@@ -116,22 +116,24 @@
 
   function renderSection(feed, now, options) {
     const settings = options || {};
+    // Admin consent for the SharePoint Files.Read scope is still pending;
+    // keep the anchor element so a later refresh() can populate it, but
+    // don't show a "Permission required" banner to every signed-in user.
+    if (settings.permission) {
+      return '<section id="nexus-georep-notifications" aria-label="GeoRep notifications" style="display:none;"></section>';
+    }
     const items = activeForDate(feed && feed.items, now);
     const generatedAt = feed && feed.generated_at ? new Date(feed.generated_at) : null;
     const syncText = settings.loading
       ? 'Connecting to SharePoint'
-      : settings.permission
-        ? 'Permission required'
-        : settings.error
+      : settings.error
       ? 'Feed temporarily unavailable'
       : generatedAt && !Number.isNaN(generatedAt.getTime())
         ? `Synced ${generatedAt.toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' })}`
         : 'Synced from GeoRep';
     const cards = settings.loading
       ? '<div style="grid-column:1/-1; padding:18px; border:1px dashed rgba(28,63,107,0.95); border-radius:12px; color:#9dc4ec;">Loading private notifications...</div>'
-      : settings.permission
-        ? '<div style="grid-column:1/-1; padding:18px; border:1px dashed rgba(236,109,37,0.55); border-radius:12px; color:#9dc4ec;">Microsoft permission is required to read the private notification folder. <button type="button" onclick="window.NexusNotifications.connectSharePoint()" style="margin-left:10px; padding:8px 12px; border-radius:8px; border:1px solid rgba(236,109,37,0.5); background:rgba(236,109,37,0.16); color:#f2955c; cursor:pointer;">Connect SharePoint</button></div>'
-        : settings.error
+      : settings.error
       ? '<div style="grid-column:1/-1; padding:18px; border:1px dashed rgba(28,63,107,0.95); border-radius:12px; color:#9dc4ec;">Notifications could not be refreshed. Existing Nexus tools are unaffected.</div>'
       : items.length
         ? items.map(renderCard).join('')
@@ -143,7 +145,7 @@
           <h2 style="font-size:20px; font-weight:600; margin:0; color:#f3f7fc;">Notifications</h2>
           <div style="font-size:12.5px; color:#9dc4ec; margin-top:4px;">Latest GeoRep updates for Meridian teams.</div>
         </div>
-        <div style="display:flex; align-items:center; gap:7px; font-size:11.5px; color:${settings.error || settings.permission ? '#f2955c' : settings.loading ? '#9dc4ec' : '#8fd6a8'};">
+        <div style="display:flex; align-items:center; gap:7px; font-size:11.5px; color:${settings.error ? '#f2955c' : settings.loading ? '#9dc4ec' : '#8fd6a8'};">
           <span style="width:7px; height:7px; border-radius:50%; background:currentColor;"></span>
           ${escapeHtml(items.length + ' active - ' + syncText)}
         </div>
