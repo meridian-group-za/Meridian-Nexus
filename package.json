@@ -1,0 +1,14 @@
+{
+  "name": "meridian-nexus-notification-robot",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "robot:check": "node scripts/local-georep-robot.mjs check",
+    "robot:login": "node scripts/local-georep-robot.mjs login",
+    "robot:sync": "node scripts/local-georep-robot.mjs sync",
+    "robot:install": "powershell -ExecutionPolicy Bypass -File scripts/install-local-georep-robot.ps1"
+  },
+  "dependencies": {
+    "playwright": "1.61.1"
+  }
+}
