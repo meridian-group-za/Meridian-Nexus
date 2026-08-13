@@ -14,6 +14,7 @@ const repositoryRoot = path.resolve(scriptDir, '..');
 const robotRoot = path.join(repositoryRoot, '.georep-robot');
 const profileDir = path.join(robotRoot, 'browser-profile');
 const logDir = path.join(robotRoot, 'logs');
+const signInNotifiedMarker = path.join(robotRoot, '.sign-in-notified');
 const geoRepPage = 'https://meridian.georep.com/portal/index.php/notifications';
 const geoRepApi = 'https://meridian.georep.com/portal_api/ContentFeed/fetch';
 const sharePointFolderPage = 'https://meridiangroupza.sharepoint.com/sites/MeridianNexus/Shared%20Documents/Connect/Notifications';
@@ -225,8 +226,36 @@ async function sync() {
     const privateFeed = await buildPrivateFeed(page, records);
     await uploadPrivateFeed(context, privateFeed);
     await log(`Uploaded ${privateFeed.feed.items.length} notifications and ${privateFeed.files.length} images to SharePoint.`);
+    await fs.rm(signInNotifiedMarker, { force: true });
   } finally {
     await context.close();
+  }
+}
+
+// A plain WinForms balloon tip rather than the modern toast APIs - those
+// need an AppUserModelID registered against a real installed app or the
+// call silently no-ops, which a scheduled-task script doesn't have. This
+// needs an interactive desktop session to actually display (the scheduled
+// task must run "only when user is logged on", not "whether logged on or
+// not") but requires no extra install and no admin rights.
+async function notifyUser(title, message) {
+  const script = `Add-Type -AssemblyName System.Windows.Forms; ` +
+    `$n = New-Object System.Windows.Forms.NotifyIcon; ` +
+    `$n.Icon = [System.Drawing.SystemIcons]::Warning; ` +
+    `$n.Visible = $true; ` +
+    `$n.BalloonTipTitle = '${title.replace(/'/g, "''")}'; ` +
+    `$n.BalloonTipText = '${message.replace(/'/g, "''")}'; ` +
+    `$n.ShowBalloonTip(15000); ` +
+    `Start-Sleep -Seconds 16; ` +
+    `$n.Dispose()`;
+  try {
+    const { spawn } = await import('node:child_process');
+    spawn('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-Command', script], {
+      detached: true,
+      stdio: 'ignore',
+    }).unref();
+  } catch (error) {
+    await log(`Notification failed: ${error.message}`);
   }
 }
 
@@ -244,5 +273,16 @@ try {
   else throw new Error(`Unknown command: ${command}`);
 } catch (error) {
   await log(`ERROR: ${error.message}`);
+  if (error.code === 'SIGN_IN_REQUIRED') {
+    // Every 15-minute retry hits this same branch while the session stays
+    // expired - a marker file caps it at one popup per outage instead of
+    // one every 15 minutes. sync() clears the marker on its next success.
+    let alreadyNotified = false;
+    try { await fs.access(signInNotifiedMarker); alreadyNotified = true; } catch {}
+    if (!alreadyNotified) {
+      await notifyUser('Nexus Notifications robot', 'GeoRep or SharePoint sign-in expired. Run: npm run robot:login');
+      await fs.writeFile(signInNotifiedMarker, new Date().toISOString(), 'utf8');
+    }
+  }
   process.exitCode = error.code === 'SIGN_IN_REQUIRED' ? 2 : 1;
 }
