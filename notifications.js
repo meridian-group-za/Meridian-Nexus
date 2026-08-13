@@ -9,7 +9,13 @@
   // to be resolved to its plain ID first, then the drive item is addressed
   // from that ID in a separate call.
   const graphSiteLookupUrl = 'https://graph.microsoft.com/v1.0/sites/meridiangroupza.sharepoint.com:/sites/MeridianNexus';
-  const sharePointScopes = ['Files.Read'];
+  // Files.Read only covers the user's own OneDrive plus items explicitly
+  // shared with them by name - it does not extend to a SharePoint team
+  // site's document library reached via normal site membership (confirmed
+  // 2026-08-13: Graph Explorer got accessDenied on this site's /drive with
+  // Files.Read consented, and succeeded once Sites.Read.All was consented
+  // instead).
+  const sharePointScopes = ['Sites.Read.All'];
   let sharePointClient = null;
   let sharePointAccount = null;
   let siteIdPromise = null;
