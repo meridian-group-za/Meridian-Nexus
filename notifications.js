@@ -138,15 +138,17 @@
     </article>`;
   }
 
-  // Lazily builds a single full-viewport overlay the first time a section
-  // renders in a real DOM, and wires one delegated click listener so it
-  // works for every card's image, including ones re-rendered later by
-  // refresh(). No-ops under Node (tests call renderCard/renderSection
-  // directly without a document).
-  let lightboxWired = false;
-  function ensureLightbox() {
-    if (lightboxWired || typeof document === 'undefined') return;
-    lightboxWired = true;
+  // Wires a document-level click listener immediately (document always
+  // exists, even before document.body) but builds and appends the actual
+  // overlay lazily on first real click - renderSection() can run as early
+  // as portal.html's own template-building step, before <body> exists, so
+  // anything that needs document.body has to be deferred past that point.
+  // No-ops under Node (tests call renderCard/renderSection directly
+  // without a document).
+  let lightboxListenerWired = false;
+  let lightboxEls = null;
+
+  function buildLightbox() {
     const overlay = document.createElement('div');
     overlay.id = 'nexus-notification-lightbox';
     overlay.style.cssText = 'display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; padding:32px; box-sizing:border-box; background:rgba(5,15,30,0.86); cursor:zoom-out;';
@@ -158,13 +160,21 @@
     overlay.addEventListener('click', close);
     img.addEventListener('click', (event) => event.stopPropagation());
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
+    document.body.appendChild(overlay);
+    return { overlay, img };
+  }
+
+  function ensureLightbox() {
+    if (lightboxListenerWired || typeof document === 'undefined') return;
+    lightboxListenerWired = true;
     document.addEventListener('click', (event) => {
       const target = event.target.closest && event.target.closest('[data-nexus-notification-image]');
       if (!target) return;
-      img.src = target.getAttribute('src') || '';
-      overlay.style.display = 'flex';
+      if (!lightboxEls && document.body) lightboxEls = buildLightbox();
+      if (!lightboxEls) return;
+      lightboxEls.img.src = target.getAttribute('src') || '';
+      lightboxEls.overlay.style.display = 'flex';
     });
-    document.body.appendChild(overlay);
   }
 
   function renderSection(feed, now, options) {
