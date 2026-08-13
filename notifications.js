@@ -3,11 +3,29 @@
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.NexusNotifications = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function createNexusNotifications() {
-  const graphFeedUrl = 'https://graph.microsoft.com/v1.0/sites/meridiangroupza.sharepoint.com:/sites/MeridianNexus:/drive/root:/Connect/Notifications/notifications.json:/content';
-  const graphFolderUrl = 'https://graph.microsoft.com/v1.0/sites/meridiangroupza.sharepoint.com:/sites/MeridianNexus:/drive/root:/Connect/Notifications';
+  // Graph doesn't support chaining two colon-addressed path segments in one
+  // request (sites/{hostname}:/{path}: followed by /drive/root:/{path}:
+  // fails with "Resource not found for the segment 'root:'") - the site has
+  // to be resolved to its plain ID first, then the drive item is addressed
+  // from that ID in a separate call.
+  const graphSiteLookupUrl = 'https://graph.microsoft.com/v1.0/sites/meridiangroupza.sharepoint.com:/sites/MeridianNexus';
   const sharePointScopes = ['Files.Read'];
   let sharePointClient = null;
   let sharePointAccount = null;
+  let siteIdPromise = null;
+
+  async function resolveSiteId(token) {
+    if (!siteIdPromise) {
+      siteIdPromise = fetch(graphSiteLookupUrl, { headers: { Authorization: `Bearer ${token}` } })
+        .then((response) => {
+          if (!response.ok) throw new Error(`Site lookup returned ${response.status}`);
+          return response.json();
+        })
+        .then((site) => site.id)
+        .catch((error) => { siteIdPromise = null; throw error; });
+    }
+    return siteIdPromise;
+  }
   let currentFeed = { items: [] };
   let currentSettings = { loading: true };
   let loadingPromise = null;
@@ -160,10 +178,10 @@
     return currentFeed;
   }
 
-  async function hydrateImages(items, token) {
+  async function hydrateImages(items, token, siteId) {
     return Promise.all((items || []).map(async (item) => {
       if (!item.image_file) return item;
-      const imageUrl = `${graphFolderUrl}:/${encodeURIComponent(item.image_file)}:/content`;
+      const imageUrl = `https://graph.microsoft.com/v1.0/sites/${siteId}/drive/root:/Connect/Notifications/${encodeURIComponent(item.image_file)}:/content`;
       try {
         const response = await fetch(imageUrl, { headers: { Authorization: `Bearer ${token}` } });
         if (!response.ok) throw new Error(`Image returned ${response.status}`);
@@ -186,6 +204,8 @@
       const auth = interactive
         ? await sharePointClient.acquireTokenPopup(request)
         : await sharePointClient.acquireTokenSilent(request);
+      const siteId = await resolveSiteId(auth.accessToken);
+      const graphFeedUrl = `https://graph.microsoft.com/v1.0/sites/${siteId}/drive/root:/Connect/Notifications/notifications.json:/content`;
       const response = await fetch(graphFeedUrl, {
         cache: 'no-store',
         headers: { Authorization: `Bearer ${auth.accessToken}` },
@@ -196,7 +216,7 @@
         if (!response.ok) throw new Error(`SharePoint feed returned ${response.status}`);
         currentFeed = await response.json();
       }
-      currentFeed.items = await hydrateImages(currentFeed.items, auth.accessToken);
+      currentFeed.items = await hydrateImages(currentFeed.items, auth.accessToken, siteId);
       currentSettings = {};
     } catch (error) {
       const code = String(error && (error.errorCode || error.code || error.message) || '').toLowerCase();
