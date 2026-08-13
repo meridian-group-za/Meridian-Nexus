@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.3" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Copies private GeoRep notifications and images to Meridian Nexus SharePoint every 15 minutes.</Description>
+    <URI>\Meridian Nexus - GeoRep Notifications</URI>
+  </RegistrationInfo>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-12-1-1243138586-1242759981-2169133714-1536740047</UserId>
+      <LogonType>InteractiveToken</LogonType>
+    </Principal>
+  </Principals>
+  <Settings>
+    <DisallowStartIfOnBatteries>true</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>true</StopIfGoingOnBatteries>
+    <ExecutionTimeLimit>PT10M</ExecutionTimeLimit>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <IdleSettings>
+      <Duration>PT10M</Duration>
+      <WaitTimeout>PT1H</WaitTimeout>
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <UseUnifiedSchedulingEngine>true</UseUnifiedSchedulingEngine>
+  </Settings>
+  <Triggers>
+    <TimeTrigger>
+      <StartBoundary>2026-08-12T21:21:49+02:00</StartBoundary>
+      <Repetition>
+        <Interval>PT15M</Interval>
+        <StopAtDurationEnd>true</StopAtDurationEnd>
+      </Repetition>
+    </TimeTrigger>
+  </Triggers>
+  <Actions Context="Author">
+    <Exec>
+      <Command>C:\Program Files\nodejs\node.exe</Command>
+      <Arguments>"C:\Users\CarinPillay\Documents\Codex\2026-08-12\c-users-carinpillay-onedrive-meridian-group\work\Meridian-Nexus\scripts\local-georep-robot.mjs" sync</Arguments>
+      <WorkingDirectory>C:\Users\CarinPillay\Documents\Codex\2026-08-12\c-users-carinpillay-onedrive-meridian-group\work\Meridian-Nexus</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>
