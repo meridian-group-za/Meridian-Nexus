@@ -117,7 +117,7 @@
       : '';
     const actionMarkup = link
       ? `<a href="${link}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:7px; padding:8px 13px; border-radius:8px; border:1px solid rgba(236,109,37,0.42); background:rgba(236,109,37,0.13); color:#f2955c; font-size:12.5px; font-weight:600; text-decoration:none;">${actionText} <span aria-hidden="true">&rarr;</span></a>`
-      : '<span style="font-size:12px; color:#789bbc;">No link supplied</span>';
+      : '';
 
     return `<article data-nexus-notification="${escapeHtml(item.source_id || item.id || '')}" style="display:flex; flex-direction:column; min-width:0; padding:18px; border-radius:13px; border:1px solid rgba(28,63,107,0.95); background:rgba(18,58,104,0.42);">
       <div style="display:flex; align-items:flex-start; gap:14px; min-width:0;">
