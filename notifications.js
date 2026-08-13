@@ -113,7 +113,7 @@
     const actionText = escapeHtml(item.action_text || 'Open');
     const endDate = formatDate(item.end_date);
     const imageMarkup = image
-      ? `<img data-nexus-notification-image src="${image}" alt="" loading="lazy" style="flex:0 0 auto; width:clamp(78px,30%,104px); aspect-ratio:1/1; object-fit:cover; object-position:center; border-radius:10px; border:1px solid rgba(157,196,236,0.2); background:rgba(8,27,52,0.55);">`
+      ? `<img data-nexus-notification-image src="${image}" alt="" loading="lazy" style="flex:0 0 auto; width:clamp(78px,30%,104px); aspect-ratio:1/1; object-fit:cover; object-position:center; border-radius:10px; border:1px solid rgba(157,196,236,0.2); background:rgba(8,27,52,0.55); cursor:zoom-in;">`
       : '';
     const actionMarkup = link
       ? `<a href="${link}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:7px; padding:8px 13px; border-radius:8px; border:1px solid rgba(236,109,37,0.42); background:rgba(236,109,37,0.13); color:#f2955c; font-size:12.5px; font-weight:600; text-decoration:none;">${actionText} <span aria-hidden="true">&rarr;</span></a>`
@@ -138,7 +138,37 @@
     </article>`;
   }
 
+  // Lazily builds a single full-viewport overlay the first time a section
+  // renders in a real DOM, and wires one delegated click listener so it
+  // works for every card's image, including ones re-rendered later by
+  // refresh(). No-ops under Node (tests call renderCard/renderSection
+  // directly without a document).
+  let lightboxWired = false;
+  function ensureLightbox() {
+    if (lightboxWired || typeof document === 'undefined') return;
+    lightboxWired = true;
+    const overlay = document.createElement('div');
+    overlay.id = 'nexus-notification-lightbox';
+    overlay.style.cssText = 'display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; padding:32px; box-sizing:border-box; background:rgba(5,15,30,0.86); cursor:zoom-out;';
+    const img = document.createElement('img');
+    img.alt = '';
+    img.style.cssText = 'max-width:90vw; max-height:90vh; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.5); cursor:default;';
+    overlay.appendChild(img);
+    const close = () => { overlay.style.display = 'none'; img.src = ''; };
+    overlay.addEventListener('click', close);
+    img.addEventListener('click', (event) => event.stopPropagation());
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
+    document.addEventListener('click', (event) => {
+      const target = event.target.closest && event.target.closest('[data-nexus-notification-image]');
+      if (!target) return;
+      img.src = target.getAttribute('src') || '';
+      overlay.style.display = 'flex';
+    });
+    document.body.appendChild(overlay);
+  }
+
   function renderSection(feed, now, options) {
+    ensureLightbox();
     const settings = options || {};
     // Admin consent for the SharePoint Files.Read scope is still pending;
     // keep the anchor element so a later refresh() can populate it, but
