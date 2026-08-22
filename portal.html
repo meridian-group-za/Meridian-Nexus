@@ -69,27 +69,31 @@ document.addEventListener('DOMContentLoaded', async function() {
     const manifest = JSON.parse(manifestEl.textContent);
     let template = JSON.parse(templateEl.textContent);
 
-    // Inventory is live: promote only its Insights card from a development
+    // These tools are live: promote their Insights cards from a development
     // placeholder to the same linked-card treatment used by other live tools.
-    const inventoryUrl = 'https://meridiannexusinventory-a4a6ebg6bcamhhe5.southafricanorth-01.azurewebsites.net/';
-    const inventoryTitleAt = template.indexOf('>Inventory</div>');
-    if (inventoryTitleAt !== -1) {
-      const cardStart = template.lastIndexOf('<div class="nx-opt"', inventoryTitleAt);
-      const statusAt = template.indexOf('>In development</span>', inventoryTitleAt);
+    const liveInsightsCards = [
+      { title: 'Inventory', url: 'https://meridiannexusinventory-a4a6ebg6bcamhhe5.southafricanorth-01.azurewebsites.net/' },
+      { title: 'Sales', url: 'https://meridian-group-za.github.io/Sales-Insights/Sales%20Insights%20Dashboard.dc.html' }
+    ];
+    for (const live of liveInsightsCards) {
+      const titleAt = template.indexOf('>' + live.title + '</div>');
+      if (titleAt === -1) continue;
+      const cardStart = template.lastIndexOf('<div class="nx-opt"', titleAt);
+      const statusAt = template.indexOf('>In development</span>', titleAt);
       const statusStart = template.lastIndexOf('<span', statusAt);
       const statusEnd = statusAt === -1 ? -1 : template.indexOf('</span>', statusAt) + 7;
       const cardEnd = statusEnd < 7 ? -1 : template.indexOf('</div>', statusEnd) + 6;
       if (cardStart !== -1 && statusStart !== -1 && statusEnd >= 7 && cardEnd >= 6) {
-        let inventoryCard = template.slice(cardStart, cardEnd);
+        let card = template.slice(cardStart, cardEnd);
         const cueStart = statusStart - cardStart;
         const cueEnd = statusEnd - cardStart;
         const liveCue = '<span class="nx-go" style="align-self:flex-start; margin-top:16px; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; background:rgba(236,109,37,0.14); color:#ec6d25; font-size:12.5px; font-weight:600;">Open dashboard <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></span>';
-        inventoryCard = inventoryCard.slice(0, cueStart) + liveCue + inventoryCard.slice(cueEnd);
-        inventoryCard = inventoryCard
-          .replace(/^<div class="nx-opt"/, '<a href="' + inventoryUrl + '" target="_blank" rel="noopener" class="nx-opt link"')
+        card = card.slice(0, cueStart) + liveCue + card.slice(cueEnd);
+        card = card
+          .replace(/^<div class="nx-opt"/, '<a href="' + live.url + '" target="_blank" rel="noopener" class="nx-opt link"')
           .replace('background:rgba(18,58,104,0.28); border:1px dashed', 'background:rgba(18,58,104,0.42); border:1px solid');
-        inventoryCard = inventoryCard.replace(/<\/div>$/, '</a>');
-        template = template.slice(0, cardStart) + inventoryCard + template.slice(cardEnd);
+        card = card.replace(/<\/div>$/, '</a>');
+        template = template.slice(0, cardStart) + card + template.slice(cardEnd);
       }
     }
 
