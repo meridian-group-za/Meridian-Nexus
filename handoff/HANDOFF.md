@@ -1,7 +1,7 @@
 # Nexus Notifications — handoff notes
 
 This explains the GeoRep notifications feature on Nexus Connect end to end,
-in case Carin isn't around to explain it. Read this top to bottom before
+in case the outgoing owner isn't around to explain it. Read this top to bottom before
 touching anything. This file lives at `handoff/HANDOFF.md` in this same
 repo — everything it references (`notifications.js`, `scripts/`, `tests/`,
 `portal.html`, etc.) is at the repo root alongside it, not duplicated here.
@@ -13,10 +13,10 @@ A "Notifications" section on the Connect page of the Nexus portal
 **not** a live API call from the browser to GeoRep — GeoRep has no public
 read API. Instead:
 
-1. A script (`../scripts/local-georep-robot.mjs`) runs on **Carin's
-   machine** every 15 minutes via Windows Task Scheduler, under her own
-   signed-in session.
-2. It reads GeoRep's ContentFeed pages using her authenticated browser
+1. A script (`../scripts/local-georep-robot.mjs`) runs on **the outgoing
+   owner's machine** every 15 minutes via Windows Task Scheduler, under
+   their own signed-in session.
+2. It reads GeoRep's ContentFeed pages using their authenticated browser
    session, downloads any images, and uploads a `notifications.json` +
    image files to a private SharePoint folder:
    `/sites/MeridianNexus/Shared Documents/Connect/Notifications`
@@ -53,7 +53,7 @@ In this `handoff/` folder specifically:
 
 - `HANDOFF.md` — this file.
 - `ScheduledTask_GeoRep_Notifications.xml` — an exported copy of the actual
-  Windows Scheduled Task currently running on Carin's machine, named
+  Windows Scheduled Task currently running on the outgoing owner's machine, named
   **"Meridian Nexus - GeoRep Notifications"**. Re-import it on a new
   machine with:
   ```powershell
@@ -62,7 +62,7 @@ In this `handoff/` folder specifically:
   (You'll still need to run `robot:login` once on that machine afterward —
   the task references a browser profile folder that has to exist locally,
   see below. Also note the XML hardcodes this machine's repo path and
-  Carin's account SID in `Arguments`/`WorkingDirectory`/`UserId` — realistically,
+  the outgoing owner's account SID in `Arguments`/`WorkingDirectory`/`UserId` — realistically,
   running `SETUP_NOTIFICATION_ROBOT.cmd` fresh on the new machine, which
   registers the task itself with the right paths and account, is simpler
   and more reliable than editing this XML by hand. The export here is
@@ -73,9 +73,9 @@ In this `handoff/` folder specifically:
 
 The robot's browser profile, at `.georep-robot/browser-profile` in the
 repo root, holds **live, active session cookies** for both GeoRep and
-SharePoint under Carin's account. It's already excluded via `.gitignore`
+SharePoint under the outgoing owner's account. It's already excluded via `.gitignore`
 (`.georep-robot/`) — keep it that way. Do not ever commit or share it —
-anyone with access could act as Carin in both systems. If a new person
+anyone with access could act as the outgoing owner in both systems. If a new person
 takes this over, they run `robot:login` themselves to create their own
 fresh profile under their own account; they do not need or want the old
 one.
@@ -158,8 +158,8 @@ stale copy across deploys.
 
 ## Who to contact
 
-Carin Pillay (cpillay@meridiangroup.co.za) built and maintains this. If
-she's unavailable, whoever has Azure AD admin rights for Meridian Group's
+Built and maintained by the previous owner; contact the Meridian Group IT
+team for handover questions. Failing that, whoever has Azure AD admin rights for Meridian Group's
 tenant is the next best contact for the Graph/permission side; whoever has
 access to this specific Windows machine (or wherever the scheduled task
 gets moved to) is needed for the robot side.
